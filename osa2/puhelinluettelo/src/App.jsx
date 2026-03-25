@@ -1,4 +1,126 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+import Notification from './components/Notification'
+
+const App = () => {
+  const [persons, setPersons] = useState([])
+  const [newName, setNewName] = useState('')
+  const [newNumber, setNewNumber] = useState('')
+  const [newFilter, setNewFilter] = useState('')
+  const [notification, setNotification] = useState(
+    {message: null,
+      type: 'error'
+    }
+  )
+
+  useEffect(() => {
+    console.log('effect')
+    axios
+      .get('http://localhost:3001/persons')
+      .then(response => {
+        console.log('promise fulfilled')
+        setPersons(response.data)
+      })
+  }, [])
+  console.log('render', persons.length, 'notes')
+
+  const handleFilterChange = (event) => {
+    setNewFilter(event.target.value)
+  }
+
+  const replaceNumber = (id, newNumber) => {
+    const person = persons.find(p => p.id === id)
+    if (!person) return
+
+    const changedPerson = { ...person, number: newNumber }
+    const url = `http://localhost:3001/persons/${id}`
+
+    axios.put(url, changedPerson)
+      .then(response => {
+        setPersons(persons.map(p => p.id !== id ? p : response.data))
+        setNotification({message:`Number updated for ${person.name}`, type:'success'})
+        setTimeout(() => {
+          setNotification({ ...notification, message: null})
+        }, 5000)
+      })
+      .catch(error => {
+        setNotification({ message:`Failed to update number for ${person.name}`, type:'error'})
+        setTimeout(() => {
+          setNotification({ ...notification, message: null})
+        }, 5000)
+        console.error('Error updating person:', error)
+      })
+  }
+
+  const deletePerson = (id) => {
+    if (!window.confirm('Are you sure you want to delete this person?')) return
+
+    axios.delete(`http://localhost:3001/persons/${id}`)
+      .then(() => {
+        setPersons(persons.filter(p => p.id !== id))
+        setNotification( {message:'Person deleted successfully', type:'success'})
+        setTimeout(() => {
+          setNotification({ ...notification, message: null})
+        }, 5000)
+      })
+      .catch(error => {
+        setNotification('Failed to delete person')
+        setTimeout(() => {
+          setNotification({ ...notification, message: null})
+        }, 5000)
+        console.error({message:'Error deleting person:', type:'error'}) 
+      })
+  }
+
+  const addPerson = (event) => {
+    event.preventDefault()
+    if (persons.some(person => person.name === newName)) {
+      if (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) {
+        const person = persons.find(p => p.name === newName)
+        replaceNumber(person.id, newNumber)
+      }
+      return
+    }
+
+    const personObject = {
+      name: newName,
+      number: newNumber
+    }
+
+    axios
+      .post('http://localhost:3001/persons', personObject)
+      .then(response => {
+        setNotification({message:`Person added: ${response.data.name}`, type:'success'})
+        setTimeout(() => {
+          setNotification({ ...notification, message: null})
+        }, 5000)
+
+        setPersons(persons.concat(response.data))
+        setNewName('')
+        setNewNumber('')
+      })
+      .catch(error => {
+        setNotification({message:'Failed to add person', type:'error'})
+        setTimeout(() => {
+          setNotification({ ...notification, message: null})
+        }, 5000)
+      })
+  }
+
+  return (
+    <div>
+      <h2>Phonebook</h2>
+      <Notification message={notification.message} type={notification.type} />
+      <Filter newFilter={newFilter} handleFilterChange={handleFilterChange} />
+      <h2>Add a new</h2>
+      <PersonForm newName={newName} newNumber={newNumber} setNewName={setNewName} setNewNumber={setNewNumber} addPerson={addPerson} />
+      <h2>Numbers</h2>
+      <ShowPersons persons={persons} newFilter={newFilter} deletePerson={deletePerson} />
+    </div>
+  )
+
+}
+
 
 const Filter = ({ newFilter, handleFilterChange }) => {
   return (
@@ -28,7 +150,7 @@ const PersonForm = ({ newName, newNumber, setNewName, setNewNumber, addPerson })
   )
 }
 
-const ShowPersons = ({ persons, newFilter }) => {
+const ShowPersons = ({ persons, newFilter, deletePerson }) => {
   const personsToShow = newFilter === ''
     ? persons
     : persons.filter(person => person.name.toLowerCase().includes(newFilter.toLowerCase()))
@@ -36,54 +158,44 @@ const ShowPersons = ({ persons, newFilter }) => {
   return (
     <ul>
       {personsToShow.map(person => (
-        <li key={person.name}>{person.name} {person.number}</li>
+        <li key={person.name}>{person.name} {person.number} <button type="button" onClick={() => deletePerson(person.id)}>delete</button></li>
       ))}
     </ul>
   )
 }
 
-const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456' },
-    { name: 'Ada Lovelace', number: '39-44-5323523' },
-    { name: 'Dan Abramov', number: '12-43-234345' },
-    { name: 'Mary Poppendieck', number: '39-23-6423122' }
-  ])
+const deletePerson = (id) => {
 
-  const [newName, setNewName] = useState('')
-  const [newNumber, setNewNumber] = useState('')
-  const [newFilter, setNewFilter] = useState('')
+  confirm('Are you sure you want to delete this person?')
+  axios.delete(`http://localhost:3001/persons/${id}`)
+    .then(response => {
+      setNotification({message:`Person deleted: ${response.data.name}`, type:'success'})
+        setTimeout(() => {
+          setNotification(null)
+        }, 5000)
+    })
+    .catch(error => {
+      setNotification({message: `Error deleting ${response.data.name}`, type:'error'})
+        setTimeout(() => {
+          setNotification(null)
+        }, 5000)
+    })
+}
 
-  const handleFilterChange = (event) => {
-    setNewFilter(event.target.value)
-  }
-
-  const addPerson = (event) => {
-    event.preventDefault()
-    if (persons.some(person => person.name === newName)) {
-      alert(`${newName} is already added to phonebook`)
-      return
-    }
-    const personObject = {
-      name: newName,
-      number: newNumber
-    }
-    setPersons(persons.concat(personObject))
-    setNewName('')
-    setNewNumber('')
-  }
-
-  return (
-    <div>
-      <h2>Phonebook</h2>
-      <Filter handleFilterChange={handleFilterChange} />
-      <h2>Add a new</h2>
-      <PersonForm newName={newName} newNumber={newNumber} setNewName={setNewName} setNewNumber={setNewNumber} addPerson={addPerson} />
-      <h2>Numbers</h2>
-      <ShowPersons persons={persons} newFilter={newFilter} />
-    </div>
-  )
-
+const replaceNumber = (id, newNumber) => {
+  const person = persons.find(p => p.id === id)
+  const changedPerson = { ...person, number: newNumber }
+  url = `http://localhost:3001/persons/${id}`
+  axios.put(url, changedPerson)
+    .then(response => {
+      setPersons(persons.map(p => p.id !== id ? p : response.data))
+    })
+    .catch(error => {
+      setNotification({message: `Information of ${response.data.name} has already been removed from server`, type:'error'})
+        setTimeout(() => {
+          setNotification(null)
+        }, 5000)
+    })
 }
 
 export default App
