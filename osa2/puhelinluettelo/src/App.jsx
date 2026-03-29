@@ -22,7 +22,7 @@ const App = () => {
         setPersons(response.data)
       })
   }, [])
-  console.log('render', persons.length, 'notes')
+  console.log('render', persons.length, 'persons')
 
   const handleFilterChange = (event) => {
     setNewFilter(event.target.value)
