@@ -1,0 +1,26 @@
+{
+  "name": "puhelinluettelon_backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/salonensara/FSOpalautusrepo.git#main"
+  },
+  "author": "Sara Salonen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/salonensara/FSOpalautusrepo/issues"
+  },
+  "homepage": "https://github.com/salonensara/FSOpalautusrepo/tree/main#readme",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "morgan": "^1.10.1"
+  }
+}
