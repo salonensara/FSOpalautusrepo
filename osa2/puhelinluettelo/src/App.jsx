@@ -23,7 +23,7 @@ const App = () => {
   }, [])
 
   const personsToShow = persons.filter((person) =>
-    person.name.toLowerCase().includes(filter.toLowerCase())
+    person.name && person.name.toLowerCase().includes((filter || '').toLowerCase())
   )
 
   const updatePerson = (id, newNumber) => {
@@ -35,7 +35,7 @@ const App = () => {
     personService
       .update(changedPerson)
       .then(response => {
-        setPersons(persons.map(p => p.id !== id ? p : response.data))
+        setPersons(persons.map(p => p.id !== id ? p : response))
         setNotification({message:`Number updated for ${person.name}`, type:'success'})
         setTimeout(() => {
           setNotification({ ...notification, message: null})
@@ -79,14 +79,31 @@ const App = () => {
     personService
       .create({ name: newName, number: newNumber })
       .then(response => {
-        setNotification({message:`Person added: ${response.data.name}`, type:'success'})
+        if (response.error) {
+          setNotification({message: response.error, type:'error'})
+          setTimeout(() => {
+            setNotification({ ...notification, message: null})
+          }, 5000)
+          return
+        }
+        setNotification({message:`Person added: ${response.name}`, type:'success'})
         setTimeout(() => {
           setNotification({ ...notification, message: null})
         }, 5000)
-
-        setPersons(persons.concat(response.data))
+        console.log('response from server:', response)
+        setPersons(persons.concat(response))
         setNewName('')
         setNewNumber('')
+      })
+      .catch(error => {
+        if (error.response && error.response.data && error.response.data.error) {
+          setNotification({message: error.response.data.error, type:'error'})
+        } else {
+          setNotification({message: 'Error adding person', type:'error'})
+        }
+        setTimeout(() => {
+          setNotification({ ...notification, message: null})
+        }, 5000)
       })
   }
 
@@ -98,7 +115,7 @@ const App = () => {
       <h2>Add a new</h2>
       <PersonForm newName={newName} newNumber={newNumber} setNewName={setNewName} setNewNumber={setNewNumber} addPerson={onAddNew} />
       <h2>Numbers</h2>
-      <Persons persons={persons} newFilter={filter} deletePerson={onRemove} />
+      <Persons persons={personsToShow} onRemove={onRemove} />
     </div>
   )
 
