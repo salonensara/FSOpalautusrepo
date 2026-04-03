@@ -1,5 +1,6 @@
 require('dotenv').config()
 const express = require('express')
+const path = require('path')
 const app = express()
 
 const morgan = require('morgan')
@@ -10,7 +11,7 @@ app.use(morgan('tiny'))
 morgan.token('body', (request, response) => JSON.stringify(request.body))
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-app.use(express.static('dist'))
+app.use(express.static(path.join(__dirname, 'dist')))
 app.use(express.json())
 
 
