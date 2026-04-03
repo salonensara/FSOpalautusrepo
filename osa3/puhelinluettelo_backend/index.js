@@ -30,7 +30,7 @@ app.get('/api/persons/:id', (request, response, next) => {
       response.status(404).end()
     }
   })
-  .catch(error => next(error))
+    .catch(error => next(error))
 })
 
 app.get('/api/info', (request, response) => {
@@ -53,16 +53,16 @@ app.delete('/api/persons/:id', (request, response, next) => {
 app.post('/api/persons', (request, response, next) => {
   const body = request.body
   if (!body.name || !body.number) {
-    return response.status(400).json({ 
-      error: 'name missing' 
+    return response.status(400).json({
+      error: 'name missing'
     })
   }
 
   Person.findOne({ name: body.name })
     .then(existingPerson => {
       if (existingPerson) {
-        return response.status(400).json({ 
-          error: 'name must be unique' 
+        return response.status(400).json({
+          error: 'name must be unique'
         })
       }
 
@@ -83,7 +83,7 @@ app.put('/api/persons/:id', (request, response, next) => {
   const { name, number } = request.body
 
   Person.findById(request.params.id)
-    .then(person =>{
+    .then(person => {
       if (!person) {
         return response.status(404).end()
       }
