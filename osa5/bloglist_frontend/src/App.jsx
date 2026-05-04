@@ -1,18 +1,30 @@
 import { useState, useEffect } from 'react'
 import Blog from './components/Blog'
+
+import {
+  BrowserRouter as Router,
+  Routes, Route, Link, Navigate, useNavigate, useMatch
+} from 'react-router-dom'
 import blogService from './services/blogs'
 import loginService from './services/login'
 import Notification from './components/Notification'
 import BlogForm from './components/BlogForm'
 import Togglable from './components/Togglable'
+import BlogList from './components/BlogList'
+import Login from './components/Login'
+import BlogDetails from './components/BlogDetails'
 
 const App = () => {
+  const navigate = useNavigate()
+
   const [blogs, setBlogs] = useState([])
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState(null)
   const [messageType, setMessageType] = useState('')
   const [user, setUser] = useState(null)
+  const match = useMatch('/blogs/:id')
+  const blog = match ? blogs.find(blog => blog.id === match.params.id) : null
 
   useEffect(() => {
     blogService.getAll().then(blogs =>
@@ -79,8 +91,7 @@ const App = () => {
     }
   }
 
-  const handleLogin = async event => {
-    event.preventDefault()
+  const handleLogin = async ({ username, password }) => {
     try {
       const user = await loginService.login({ username, password })
 
@@ -96,6 +107,7 @@ const App = () => {
       setUser(user)
       setUsername('')
       setPassword('')
+      navigate('/')
     } catch {
       setMessageType('error')
       setMessage('wrong username or password')
@@ -110,57 +122,45 @@ const App = () => {
     window.localStorage.removeItem('loggedBlogappUser')
     setUser(null)
     blogService.setToken(null)
+    navigate('/')
   }
 
-  const loginForm = () => (
-    <form onSubmit={handleLogin}>
-      <h2>Log in to application</h2>
-      <div>
-        <label>
-          username:
-          <input
-            type="text"
-            value={username}
-            onChange={({ target }) => setUsername(target.value)}
-          />
-        </label>
-      </div>
-      <div>
-        <label>
-          password:
-          <input
-            type="password"
-            value={password}
-            onChange={({ target }) => setPassword(target.value)}
-          />
-        </label>
-      </div>
-      <button type="submit">login</button>
-    </form>
-  )
+  const padding = {
+    padding: 5
+  }
 
   return (
     <div>
-      <h2>Blogs</h2>
+      <div>
+        <Link style={padding} to="/">blogs</Link>
+        {user && <Link style={padding} to="/create">new blog</Link>}
+        {user ? ( <span>
+          <button onClick={handleLogout}>logout</button>
+          <p>{user.name} logged in</p>
+        </span>)
+          : (
+            <Link style={padding} to="/login">login</Link>
+          )}
+      </div>
       <Notification message={message} type={messageType} />
 
-      {!user && loginForm()}
-      {user && (
-        <div>
-          <p>{user.name} logged in</p>
-          <button onClick={handleLogout}>logout</button>
-
-          <Togglable buttonLabel="new blog">
-            <BlogForm createBlog={addBlog} />
-          </Togglable>
-
-          {blogs
-            .toSorted((a, b) => b.likes - a.likes)
-            .map(blog =>
-              <Blog key={blog.id} blog={blog} user={user} updateBlog={updateBlog} deleteBlog={deleteBlog} />
-            )}
-        </div>
-      )}
+      <Routes>
+        <Route path="/" element={
+          user ? <BlogList blogs={blogs} updateBlog={updateBlog} deleteBlog={deleteBlog} user={user} />
+            : <Navigate to="/login" replace />
+        } />
+        <Route path="/blogs/:id" element={
+          blog ? <BlogDetails blog={blog} updateBlog={updateBlog} deleteBlog={deleteBlog} user={user} />
+            : <Navigate to="/login" replace />
+        } />
+        <Route
+          path="/login"
+          element={<Login handleLogin={handleLogin} message={message} />}
+        />
+        <Route path="/create" element={
+          <BlogForm createBlog={addBlog}/>
+        } />
+      </Routes>
     </div>
   )
 }
