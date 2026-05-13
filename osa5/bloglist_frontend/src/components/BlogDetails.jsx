@@ -1,5 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { Button, Typography, Paper, Box, Divider, Stack, Link as MuiLink } from '@mui/material'
 
 
 const BlogDetails = ({ blog, updateBlog, deleteBlog, user }) => {
@@ -26,27 +28,62 @@ const BlogDetails = ({ blog, updateBlog, deleteBlog, user }) => {
     }
   }
 
+  const canDelete = user && blog.user?.username === user.username
+
   return (
-    <div>
-      <h2>{blog.author}: {blog.title}</h2>
-      <div>
-        <a href={blog.url} target="_blank" rel="noopener noreferrer">
-          {blog.url}
-        </a>
-      </div>
-      <div>
-        {blog.likes} likes
-        {user && (
-          <button onClick={handleLike} style={{ marginLeft: 5 }}>
-            like
-          </button>
-        )}
-      </div>
-      <div>
-        added by {blog.user?.name || 'anonymous'}
-      </div>
-      <button onClick={() => handleDelete(blog.id)}>remove</button>
-    </div>
+    <Box sx={{ mt: 4 }}>
+      <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          <strong>{blog.title}</strong>
+        </Typography>
+        <Typography variant="h6" color="textSecondary" gutterBottom>
+          by {blog.author}
+        </Typography>
+
+        <Divider sx={{ my: 2 }} />
+
+        <Stack spacing={2}>
+          <Typography variant="body1">
+            <MuiLink href={blog.url} target="_blank" rel="noopener noreferrer">
+              {blog.url}
+            </MuiLink>
+          </Typography>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="h6">
+              {blog.likes} {blog.likes === 1 ? 'like' : 'likes'}
+            </Typography>
+            {user && (
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={handleLike}
+              >
+                like
+              </Button>
+            )}
+          </Box>
+
+          <Typography variant="body2" color="textSecondary">
+            added by <strong>{blog.user?.name || 'anonymous'}</strong>
+          </Typography>
+
+          {canDelete && (
+            <Box sx={{ pt: 2 }}>
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                onClick={handleDelete}
+              >
+                remove blog
+              </Button>
+            </Box>
+          )}
+        </Stack>
+      </Paper>
+    </Box>
   )
 }
 

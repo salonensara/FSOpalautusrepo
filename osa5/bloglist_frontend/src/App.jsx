@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import Blog from './components/Blog'
+import { AppBar, Toolbar, Button, Typography, Box } from '@mui/material'
 
 import {
   BrowserRouter as Router,
@@ -125,23 +126,33 @@ const App = () => {
     navigate('/')
   }
 
-  const padding = {
-    padding: 5
-  }
-
   return (
     <div>
-      <div>
-        <Link style={padding} to="/">blogs</Link>
-        {user && <Link style={padding} to="/create">new blog</Link>}
-        {user ? ( <span>
-          <button onClick={handleLogout}>logout</button>
-          <p>{user.name} logged in</p>
-        </span>)
-          : (
-            <Link style={padding} to="/login">login</Link>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Blogs
+          </Typography>
+          <Button color="inherit" component={Link} to="/">
+            blogs
+          </Button>
+          {user && (
+            <Button color="inherit" component={Link} to="/create">
+              new blog
+            </Button>
           )}
-      </div>
+          {user ? ( <span>
+            <Button onClick={handleLogout} color="inherit">logout</Button>
+            {user.name} logged in
+          </span>)
+            : (
+              <Button color="inherit" component={Link} to="/login">
+                login
+              </Button>
+            )}
+        </Toolbar>
+      </AppBar>
+
       <Notification message={message} type={messageType} />
 
       <Routes>
